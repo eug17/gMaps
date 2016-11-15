@@ -1,6 +1,6 @@
 'use strict';
 angular.module('ngMaps', [])
-.directive('ngmaps', function($window, $timeout) {
+.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 	return {
 		restrict: 'E',
 		replace: true,
@@ -186,4 +186,4 @@ angular.module('ngMaps', [])
 
 		}
 	}
-});
+}]);
