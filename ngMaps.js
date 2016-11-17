@@ -19,7 +19,7 @@ angular.module('ngMaps', [])
 			var map, currentMarkers, initMap, google;
 			var uid = scope.markersUid || 'id';
 
-			scope.$watch('markers', function(oldValue, newValue) {
+			scope.watchCollection('markers', function(oldValue, newValue) {
 				if(oldValue != newValue)
 					updateMarkers();
 			});
