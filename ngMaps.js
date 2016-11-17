@@ -142,7 +142,7 @@ angular.module('ngMaps', [])
 			//search in array of Markers
 			function searchInArrayOfMarkers(target){
 				for(var i = 0; i < scope.markers.length; i++){
-			    	if( scope.markers[i][uid] === target){
+			    	if( scope.markers[i][uid] == target){
 			      		return true;
 			    	}
 			  	}
@@ -152,7 +152,7 @@ angular.module('ngMaps', [])
 			//search in array of Markers
 			function searchInArray(array, target){
 				for(var i = 0; i < array.length; i++){
-			    	if(array[i] === target){
+			    	if(array[i] == target[uid]){
 			      		return true;
 			    	}
 			  	}
