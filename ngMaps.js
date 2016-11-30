@@ -162,7 +162,7 @@ angular.module('ngMaps', [])
 			// Deletes all markers in the array by removing references to them.
 			function deleteAllMarkers(currentKeys) {
 				for (var i = 0; i < currentKeys.length; i++) {
-		          currentMarkers[i].setMap(null);
+		          	currentMarkers[currentKeys[i]].setMap(null);
 		        }
 				currentMarkers = {};
 			}
@@ -170,7 +170,7 @@ angular.module('ngMaps', [])
 			// Delete single marker
 			function removeMarker(id){
 				currentMarkers[id].setMap(null);
-				delete currentMarkers.id;
+				delete currentMarkers[id];
 			}
 
 			function updateUserLocation(){
