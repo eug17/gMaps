@@ -114,7 +114,7 @@ angular.module('ngMaps', [])
 					}
 					
 					// remove marker
-					for(var i = 0; i < currentKeys; i++){
+					for(var i = 0; i < currentKeys.length; i++){
 						if(!searchInArrayOfMarkers(currentKeys[i])){
 							removeMarker(currentKeys[i]);
 						}
