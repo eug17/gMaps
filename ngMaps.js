@@ -31,7 +31,8 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			minZoom: '@',
 			unsetUserMarker: '@',
 			polygonPoints: '=',
-			polygonPointsOptions: '='
+			polygonPointsOptions: '=',
+			panToPoly: '='
 		},
 		link: function(scope, element, attrs) {
 			var map, currentMarkers, initMap, google, drawingManager, geocoder, polygonFromPoints;
@@ -43,6 +44,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			var uid = scope.markersUid || 'id';
 			var polygonItems = [];
 			var newPoly = false;
+			var panToPoly = scope.panToPoly || false;
 
 			var polygonPointsOptions = scope.polygonPointsOptions || {
 				draggable: false,
@@ -93,20 +95,22 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 
 				centerControlDiv.index = 1;
 
-				if (scope.addPolygonItem) {
-					google.maps.Polygon.prototype.getBounds = function() {
-						var bounds = [];
-						var length = this.getPath().getLength();
-						// console.log(length);
-						for (var i = 0; i < length; i++) {
-							var ln = {
-								lat: this.getPath().getAt(i).lat(),
-								lng: this.getPath().getAt(i).lng()
-							}
-							bounds.push(ln);
+				google.maps.Polygon.prototype.getBounds = function() {
+					var bounds = [];
+					var length = this.getPath().getLength();
+					// console.log(length);
+					for (var i = 0; i < length; i++) {
+						var ln = {
+							lat: this.getPath().getAt(i).lat(),
+							lng: this.getPath().getAt(i).lng()
 						}
-						return bounds;
+						bounds.push(ln);
 					}
+					return bounds;
+				}
+
+				if (scope.addPolygonItem) {
+
 
 					drawingManager = new google.maps.drawing.DrawingManager({
 						drawingMode: drawingModeSettings,
@@ -426,8 +430,16 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					// console.log('pointsTo', pointsTo);
 					polygonPointsOptions.paths = pointsTo;
 					polygonFromPoints = new google.maps.Polygon(polygonPointsOptions);
-
 					polygonFromPoints.setMap(map);
+
+					if (panToPoly) {
+						var p_bounds = new google.maps.LatLngBounds();
+						var _bounds_from_poly = polygonFromPoints.getBounds();
+						for (var i = 0; i < _bounds_from_poly.length; i++) {
+							p_bounds.extend(_bounds_from_poly[i]);
+						}
+						map.fitBounds(p_bounds);
+					}
 				}
 			}
 
