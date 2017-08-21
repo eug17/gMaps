@@ -18,19 +18,20 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			panControl: '@', // Whether to show a pan control on the map.
 			zoomControl: '@', // Whether to show a zoom control on the map.
 			scaleControl: '@', // Whether to show scale control on the map.
-			callbackfunction: '=callbackdata', //callback function(){ return clicked obj}
-			callbackboundary: '=callbackboundary', //callback function(){ return clicked obj}
+			callbackfunction: '@', //callback function(){ return clicked obj}
+			callbackboundary: '@', //callback function(){ return clicked obj}
 			markersUid: '=', // unique Id to add remove items,
 			userMarker: '=', // user marker
 			userIcon: '=',
 			markersIcon: '=',
 			addPolygonItem: '=', //
 			removePolygon: '=',
-			polygoncallback: '=polygoncallback',
+			polygoncallback: '@',
 			drawingMode: '@',
 			minZoom: '@',
 			unsetUserMarker: '@',
-			polygonPoints: '='
+			polygonPoints: '=',
+			polygonPointsOptions: '='
 		},
 		link: function(scope, element, attrs) {
 			var map, currentMarkers, initMap, google, drawingManager, geocoder, polygonFromPoints;
@@ -43,16 +44,24 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			var polygonItems = [];
 			var newPoly = false;
 
+			var polygonPointsOptions = scope.polygonPointsOptions || {
+				draggable: false,
+				editable: false,
+				strokeColor: '#FF0000',
+				strokeOpacity: 0.8,
+				strokeWeight: 2,
+				fillColor: '#FF0000',
+				fillOpacity: 0.35
+			}
+
 			scope.$watchCollection('markers', function(oldValue, newValue) {
-				// console.log(oldValue);
-				// console.log(newValue);
 				if (oldValue != newValue)
-					updatePolygon();
+					updateMarkers();
 			});
 
 			scope.$watchCollection('polygonPoints', function(oldValue, newValue) {
 				if (oldValue != newValue)
-					updateMarkers();
+					updatePolygon();
 			})
 
 			scope.$watch('userLocation', function(oldValue, newValue) {
@@ -65,7 +74,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			function createMap() {
 				var mapOptions = {
 					zoom: scope.zoom || 14,
-					minZoom: scope.minZoom || 10,
+					minZoom: scope.minZoom || 1,
 					center: new google.maps.LatLng(scope.userLocation.lat, scope.userLocation.lng),
 					mapTypeId: google.maps.MapTypeId.ROADMAP,
 					zoomControl: true,
@@ -140,7 +149,8 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					var north_east = bounds.getNorthEast();
 					var south_west = bounds.getSouthWest();
 					var query_url = '?latlng_ne=' + north_east.lat() + ',' + north_east.lng() + '&latlng_sw=' + south_west.lat() + ',' + south_west.lng();
-					scope.callbackboundary(query_url);
+					if (typeof scope.callbackboundary == 'function')
+						scope.callbackboundary(query_url);
 				});
 				map.addListener('center_changed', function() {
 					if (!moved) {
@@ -149,6 +159,9 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					}
 				});
 				updateMarkers();
+				if (scope.polygonPoints && scope.polygonPoints.length) {
+					updatePolygon();
+				}
 				updateUserLocation();
 				window.addEventListener('resize', function() {
 					$timeout(function() {
@@ -179,7 +192,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 				});
 				// Add the polygon to the polygon array
 				polygons.push(polygon);
-				console.log(polygons);
+				// console.log(polygons);
 
 				// Remove the drawing controls
 				drawingManager.setOptions({
@@ -231,15 +244,15 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 				DeleteMenu.prototype.draw = function() {
 					var position = this.get('position');
 					var projection = this.getProjection();
-					console.log('position', position);
-					console.log('projection', projection);
+					// console.log('position', position);
+					// console.log('projection', projection);
 
 					if (!position || !projection) {
 						return;
 					}
 
 					var point = projection.fromLatLngToDivPixel(position);
-					console.log('point', point);
+					// console.log('point', point);
 					this.div_.style.cursor = 'pointer';
 					this.div_.style.position = 'absolute';
 					this.div_.style.padding = '7px 10px';
@@ -252,8 +265,8 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 				 * Opens the menu at a vertex of a given path.
 				 */
 				DeleteMenu.prototype.open = function(map, path, vertex) {
-					console.log('path', path.getAt(vertex));
-					console.log(vertex);
+					// console.log('path', path.getAt(vertex));
+					// console.log(vertex);
 					this.set('position', path.getAt(vertex));
 					this.set('path', path);
 					this.set('vertex', vertex);
@@ -266,9 +279,6 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 				 */
 				DeleteMenu.prototype.removeVertex = function() {
 					var path = this.get('path');
-					console.log(this);
-					console.log(path);
-					console.log(polygon.getBounds());
 					var vertex = this.get('vertex');
 
 					if (!path || vertex == undefined) {
@@ -277,11 +287,11 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					}
 
 					path.removeAt(vertex);
-					console.log(polygon.getBounds());
+					// console.log(polygon.getBounds());
 					var polygonLength = polygon.getBounds().length;
-					console.log(polygonLength);
+					// console.log(polygonLength);
 					polygonItems.splice(vertex, 1);
-					console.log(polygonItems);
+					// console.log(polygonItems);
 					if (polygonLength < 3) {
 						polygons.length = 0;
 						polygon.setMap(null);
@@ -341,13 +351,13 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					createMap();
 				} else {
 					geocoder = new google.maps.Geocoder();
-					console.log('scope.userLocation', scope.userLocation);
+					// console.log('scope.userLocation', scope.userLocation);
 					if (typeof scope.userLocation == 'string') {
-						console.log('geocoder');
+						// console.log('geocoder');
 						geocoder.geocode({
 							'address': scope.userLocation
 						}, function(results, status) {
-							console.log(status);
+							// console.log(status);
 							if (status === 'OK') {
 								scope.userLocation = {};
 								scope.userLocation.lat = results[0].geometry.location.lat();
@@ -370,14 +380,14 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			// console.log(scope.userLocation);
 
 			function loadGMaps() {
-				console.log('map: start loading js gmaps');
+				// console.log('map: start loading js gmaps');
 				if ($window.document.getElementById('google1')) {
 					return;
 				}
 				var script = $window.document.createElement('script');
 				script.setAttribute("id", "google1");
 				script.type = 'text/javascript';
-				script.src = 'https://maps.googleapis.com/maps/api/js?key=' + 'AIzaSyBg-JrkW50OSDESlth-C-LTQHpQ891FHe4' + '&libraries=places,drawing&callback=initMap';
+				script.src = 'https://maps.googleapis.com/maps/api/js?key=' + 'AIzaSyBGV6gMFPcIqhzwjr1BfpO_PThe_BBCz18' + '&libraries=places,drawing&callback=initMap';
 				$window.document.body.appendChild(script);
 			}
 
@@ -403,6 +413,8 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			}
 
 			function updatePolygon() {
+				// console.log('map', map);
+				// console.log('scope.polygonPoints', scope.polygonPoints);
 				if (map && scope.polygonPoints) {
 					var pointsTo = [];
 					if (typeof polygonFromPoints == 'object') {
@@ -411,16 +423,9 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 					for (c of scope.polygonPoints) {
 						pointsTo.push(new google.maps.LatLng(c.lat, c.lng));
 					}
-					polygonFromPoints = new google.maps.Polygon({
-						paths: pointsTo,
-						draggable: false,
-						editable: false,
-						strokeColor: '#FF0000',
-						strokeOpacity: 0.8,
-						strokeWeight: 2,
-						fillColor: '#FF0000',
-						fillOpacity: 0.35
-					});
+					// console.log('pointsTo', pointsTo);
+					polygonPointsOptions.paths = pointsTo;
+					polygonFromPoints = new google.maps.Polygon(polygonPointsOptions);
 
 					polygonFromPoints.setMap(map);
 				}
@@ -431,7 +436,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 
 			// update map markers to match scope marker collection
 			function updateMarkers() {
-				console.log(scope.markers);
+				// console.log(scope.markers);
 				if (map && scope.markers) {
 					if (!angular.isObject(currentMarkers))
 						return;
@@ -561,7 +566,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 
 				// Setup the click event listeners: center Map to user's location
 				controlUI.addEventListener('click', function() {
-					console.log(scope.userLocation);
+					// console.log(scope.userLocation);
 					map.setCenter(scope.userLocation);
 					map.controls[google.maps.ControlPosition.LEFT_BOTTOM].pop();
 					moved = false;
