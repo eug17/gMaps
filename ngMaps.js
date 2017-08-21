@@ -74,10 +74,14 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			var moved = false;
 
 			function createMap() {
+				var centerMap = new google.maps.LatLng(43.6425662, -79.3892455, 17);
+				if (!panToPoly && scope.userLocation.lat) {
+					centerMap = new google.maps.LatLng(scope.userLocation.lat, scope.userLocation.lng);
+				}
 				var mapOptions = {
 					zoom: scope.zoom || 14,
 					minZoom: scope.minZoom || 1,
-					center: new google.maps.LatLng(scope.userLocation.lat, scope.userLocation.lng),
+					center: centerMap,
 					mapTypeId: google.maps.MapTypeId.ROADMAP,
 					zoomControl: true,
 					scaleControl: false,
@@ -350,7 +354,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 
 			function evaluate() {
 				// console.log('scope.userLocation:', scope.userLocation);
-				if (scope.userLocation && scope.userLocation.lat) {
+				if (scope.userLocation && scope.userLocation.lat || panToPoly) {
 					// console.log(scope.userLocation);
 					createMap();
 				} else {
@@ -533,7 +537,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			var markerPosition;
 
 			function updateUserLocation() {
-				if (map && scope.userLocation) {
+				if (map && scope.userLocation && scope.userLocation.lat) {
 					var loc = new google.maps.LatLng(scope.userLocation);
 					map.setCenter(loc);
 					if (scope.unsetUserMarker) {
