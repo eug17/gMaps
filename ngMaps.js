@@ -35,7 +35,7 @@ ngMaps.directive('ngmaps', ['$window', '$timeout', function($window, $timeout) {
 			panToPoly: '='
 		},
 		link: function(scope, element, attrs) {
-			var map, currentMarkers, initMap, google, drawingManager, geocoder, polygonFromPoints;
+			var map, currentMarkers, initMap, google, drawingManager, geocoder, polygonFromPoints, markerUser;
 			var drawing_modes = ['polygon'];
 			var drawingModeSettings = scope.drawingMode || null;
 			console.log('minZoom', scope.minZoom);
